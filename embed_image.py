@@ -35,7 +35,11 @@ def extract_largest_cc(mask):
     return flag, mask
 
 def extract_vertices(mask_largestCC):
-    contours, hierarchy = cv2.findContours(mask_largestCC, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    major = cv2.__version__.split('.')[0]
+    if major == '3':
+        ret, contours, hierarchy = cv2.findContours(mask_largestCC, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+    else:
+        contours, hierarchy = cv2.findContours(mask_largestCC, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     if len(contours) == 0:
         return np.array([[0,0],[0,0],[0,0],[0,0]])
     cnt = max(contours, key=lambda x: cv2.contourArea(x))
