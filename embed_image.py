@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import math
 import time
+import platform
 import argparse
 
 debug = False
@@ -36,7 +37,7 @@ def extract_largest_cc(mask):
 
 def extract_vertices(mask_largestCC):
     major = cv2.__version__.split('.')[0]
-    if major == '3':
+    if int(major) >= 3:
         ret, contours, hierarchy = cv2.findContours(mask_largestCC, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
     else:
         contours, hierarchy = cv2.findContours(mask_largestCC, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -83,21 +84,27 @@ if __name__ == "__main__":
 
     img_embedding = cv2.imread(args.image_path)
     src_vertices = [[0, 0], [0, img_embedding.shape[0]], [img_embedding.shape[1], img_embedding.shape[0]], [img_embedding.shape[1], 0]]
-    img_embedding = cv2.blur(img_embedding, (9, 9))
+    img_embedding = cv2.blur(img_embedding, (21, 21))
     dst_vertices_in_use = [[0., 0.], [0., 0.], [0., 0.], [0., 0.]]
     
     cap = cv2.VideoCapture(args.input_video_path)
-    out = cv2.VideoWriter(args.output_video_path + '.avi' ,cv2.VideoWriter_fourcc(*'XVID'), 30, (1280, 720))
     
     i = 0
     while(cap.isOpened()):
         ret, frame = cap.read()
+        if i == 0:
+            if platform.system == 'Window':
+                out = cv2.VideoWriter(args.output_video_path + '.avi', cv2.VideoWriter_fourcc(*'DIVX'), 30, (frame.shape[1], frame.shape[0]))
+            else:
+                out = cv2.VideoWriter(args.output_video_path + '.avi', cv2.VideoWriter_fourcc(*'XVID'), 30, (frame.shape[1], frame.shape[0]))
         if cv2.waitKey(1) & 0xFF == ord('q') or frame is None:
             break
-        if i < 0:
-            i+=1
-            print(i)
-            continue
+        # if i < 1000:
+        #     i+=1
+        #     print(i)
+        #     continue
+        # if i > 1000:
+        #     break
         if i % 100 == 0:
             print(i, " frames processed.")
         i += 1  
@@ -124,7 +131,7 @@ if __name__ == "__main__":
             if debug:
                 print("3 Time taken = ", time.time() - start)
         
-            dst_vertices = extract_vertices(mask_largestCC)
+            dst_vertices = extract_vertices(mask_largestCC.copy())
         
             if debug:
                 print("4 Time taken = ", time.time() - start)    
